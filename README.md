@@ -147,7 +147,8 @@ CONDA_ENV      conda 환경 이름           (이 PC : lerobot)
 
 | | 크기 | 쓰는 곳 |
 |---|---|---|
-| `act_golden/` | 198 MB | **4-2 안정본** (ACT · sync) |
+| `act_golden/` | 198 MB | **4-2 안정본** — `act_edu3_100` 060000 (ACT · sync) |
+| `act_golden.bak-cylinder_v1/` | 198 MB | 옛 안정본 (`so101_cylinder_v1` · 50k). 안 쓰면 지워도 된다 |
 | `torch-cache/` | 45 MB | ACT 가 쓰는 ResNet18 백본 |
 
 `config.sh` 가 `TORCH_HOME` 을 이 폴더로 돌려놔서, **인터넷 없이도 돈다.**
@@ -236,6 +237,8 @@ GPU 드라이버와 직렬포트 권한도 폴더가 못 옮긴다.
 
 `config.sh` 아래쪽 **`STABLE_CKPT`** — 4-2 안정본 롤아웃이 쓸 체크포인트.
 이 PC 에는 `models/act_golden` 이 이미 채워져 있다(ACT · `sync` · rename_map 없음).
+내용물은 **골든 모델** — 골든 데이터 `so101_edu3`(100편)로 ACT 를 60,000 step 돌린
+`act_edu3_100/checkpoints/060000`. 같은 학습의 손실 곡선은 `edu3-2 --golden`.
 비워두면 4-2 가 실행되지 않고 고르는 법만 안내한다.
 SmolVLA 계열로 바꾼다면 `STABLE_INFERENCE_TYPE=rtc` 와
 `STABLE_RENAME_MAP` 도 함께 채운다 — **rename_map 이 빠지면 카메라 미스매치로 죽는다.**

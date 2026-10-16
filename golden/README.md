@@ -1,16 +1,23 @@
-# 골든 데이터셋 자리
+# 골든 데이터 자리
 
-여기에 **미리 잘 찍어 둔 기준 데이터셋**을 넣는다. 비어 있으면 `edu2-4` 가 안내만 하고 멈춘다.
+여기에 **미리 잘 찍어 둔 기준 데이터셋**과 그것으로 만든 **기준 학습 로그**를 둔다.
 
 ```
 golden/
-└── so101_golden/          ← 이 이름 (config.sh 의 GOLDEN_NAME)
-    ├── meta/
-    ├── data/
-    └── videos/
+├── so101_golden/               ← 골든 데이터셋 (config.sh 의 GOLDEN_NAME)
+│   ├── meta/ · data/ · videos/
+└── act_edu3_100-golden.log     ← 골든 학습 로그 (config.sh 의 GOLDEN_LOG)
 ```
 
-lerobot 데이터셋 폴더를 **통째로** 넣으면 된다.
+## 지금 들어 있는 것
+
+| | 무엇 | 쓰는 곳 |
+|---|---|---|
+| `so101_golden/` | `so101_edu3` 사본 — 100편 · 40,636프레임 · fps 30 · `top`/`wrist` | `edu2-4` 합치기 |
+| `act_edu3_100-golden.log` | 그 데이터로 ACT 60,000 step 학습한 stdout (2.7 MB) | `edu3-2 --golden` |
+
+같은 학습의 결과 모델은 `models/act_golden` 에 있다 → `edu4-2`.
+셋이 한 짝이다 : **데이터 → 곡선 → 모델**.
 
 ## 합치기 전에 맞아야 하는 것
 

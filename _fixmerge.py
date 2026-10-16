@@ -49,7 +49,7 @@ def fix_one(root: str) -> int:
     #    예상 형식이 아니면 손대지 않는다 — 잘못 고치면 더 나빠진다.
     m = re.search(r"chunk-(\d+)/file-(\d+)\.parquet$", f)
     if not m:
-        print(f"[{name}] 파일 경로가 예상 형식이 아니다 — 손대지 않는다: {f}")
+        print(f"[{name}] 파일 경로 형식이 예상과 다름 — 건너뜀: {f}")
         return 2
     want_c, want_f = int(m.group(1)), int(m.group(2))
     if fi == [want_f] and ci == [want_c]:

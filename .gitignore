@@ -1,0 +1,6 @@
+models/
+golden/so101_golden/
+*.bak*
+__pycache__/
+safety_user.sh
+.safety_measured.json

@@ -5,8 +5,8 @@ source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.sh"
 parse_args "$@"
 
 banner "1-1 · 텔레옵 (카메라 없음)" \
-        "리더암을 손으로 움직여 본다. 팔로워가 따라오면 성공." \
-        "끝낼 때는 Ctrl+C."
+        "리더암을 손으로 움직여 보세요. 팔로워가 따라 움직이면 정상입니다." \
+        "종료 : Ctrl+C."
 
 need_ports "$FOLLOWER_PORT" "$LEADER_PORT"
 

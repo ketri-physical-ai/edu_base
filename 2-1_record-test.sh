@@ -1,23 +1,27 @@
 #!/usr/bin/env bash
-# 2-1 · 녹화 연습 — 진짜와 똑같은 절차로 몇 편만 찍어 본다.
+# 2-1 · 녹화 연습 — 실제 녹화와 같은 절차로 에피소드 몇 개만 녹화해 본다.
 #      연습용 데이터셋에 저장하므로 실제 녹화본을 건드리지 않는다.
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.sh"
 parse_args "$@"
 
 # 녹화 중 Ctrl+C 는 즉시 끝내지 않는다 — lerobot 이 영상을 마저 저장해야 한다.
-trap 'echo; echo "중단 신호 — lerobot 이 저장을 마칠 때까지 기다린다. 창을 닫지 마라."' INT
+trap 'echo; echo "중단 요청됨 — 저장 중입니다. 완료될 때까지 터미널을 닫지 마세요."' INT
 
-banner "2-1 · 녹화 연습 (${TEST_EPISODES}편)" \
-        "데이터셋 : $EDU_TEST_REPO_ID  ← 연습용, 나중에 지운다" \
+banner "2-1 · 녹화 연습 (에피소드 ${TEST_EPISODES}개)" \
+        "데이터셋 : $EDU_TEST_REPO_ID  ← 연습용, 학습에 사용 안함." \
         "녹화시간 ${EPISODE_TIME_S}초 · 대기시간 ${RESET_TIME_S}초"
 
 # 명령 확인을 받은 뒤, 녹화가 시작되기 직전에 뜬다 (common.sh 의 run_cmd 가 쓴다)
 RUN_NOTICE="──────────────────────────────────────────────────────
   녹화 중 조작
-    →      한 편 일찍 끝내기
-    ←      다시 찍기
-    ESC    녹화 끝내기
+    →      현재 에피소드 조기 종료
+    ←      현재 에피소드 재녹화
+    ESC    녹화 종료
 ──────────────────────────────────────────────────────"
+
+# 에피소드 경계 표시 — 2-3 과 같은 rec_filter (common.sh) 를 쓴다
+RUN_FILTER=rec_filter
+FROM=0; TO=$(( TEST_EPISODES - 1 )); TOTAL="$TEST_EPISODES"
 
 need_ports "$FOLLOWER_PORT" "$LEADER_PORT"
 
@@ -44,7 +48,7 @@ run_cmd lerobot-record \
   --dataset.reset_time_s="$RESET_TIME_S" \
   "${EXTRA[@]+"${EXTRA[@]}"}"
 rc=$?
-[[ $rc -eq 0 ]] || { echo; echo "녹화가 정상 종료되지 않았다 (코드 $rc)."; exit "$rc"; }
+[[ $rc -eq 0 ]] || { echo; echo "녹화 비정상 종료 (코드 $rc)"; exit "$rc"; }
 
 echo
-echo "찍은 것을 보려면 :  edu2-2 --test"
+echo "에피소드 확인 :  edu2-2 --test"

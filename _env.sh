@@ -35,31 +35,31 @@ edu_install_deps() {
   [[ -n "${EDU_DEPS_TRIED:-}" ]] && return 1
   export EDU_DEPS_TRIED=1
   echo
-  echo "  ── 파이썬 꾸러미가 모자라다 ──────────────────────"
+  echo "  ── 파이썬 패키지 부족 ────────────────────────────"
   echo "     없는 것 : $miss"
   echo "     파이썬  : $(command -v python3)  ($(python3 -V 2>&1))"
   echo "     환경    : ${CONDA_DEFAULT_ENV:-${VIRTUAL_ENV:-시스템}}"
-  echo "     lerobot 을 최소 구성으로 깔면 빠지는 것들이다 (설치가 깨진 게 아니다)."
+  echo "     lerobot 최소 설치 시 빠지는 패키지입니다 (설치 오류 아님)."
   echo "       pandas·pyarrow → dataset extra    rerun → viz extra"
   echo "     설치할 명령 — extra 로 한 번에 (권장) :"
   echo "       python3 -m pip install \"lerobot[dataset,viz,feetech,smolvla]\""
-  echo "     ⓘ 4-2 안정본(SmolVLA)까지 쓰려면 smolvla 가 필요하다."
-  echo "       'all' 은 extra 43개(시뮬레이터·정책 전부)라 과하다."
+  echo "     ⓘ 4-2 안정본(SmolVLA)을 쓰려면 smolvla 가 필요합니다."
+  echo "       'all' 은 extra 43개(시뮬레이터·정책 전체)를 모두 설치하므로 권장하지 않습니다."
   echo "  ──────────────────────────────────────────────────"
   if [[ "${EDU_YES:-0}" != "1" ]]; then
     local a
-    read -r -p "  지금 설치할까? [y/N] " a || { echo "  입력을 못 받았다."; return 1; }
-    [[ "$a" =~ ^[Yy]$ ]] || { echo "  설치하지 않았다."; return 1; }
+    read -r -p "  지금 설치할까요? [y/N] " a || { echo "  입력 없음"; return 1; }
+    [[ "$a" =~ ^[Yy]$ ]] || { echo "  설치 안 함"; return 1; }
   fi
   # ⚠ 인터넷이 없으면 pip 이 재시도로 오래 멈춘다 — 먼저 확인하고, 짧게 끊는다.
   if ! timeout 4 python3 -c "
 import socket,sys
 try: socket.create_connection(('pypi.org',443),3); sys.exit(0)
 except Exception: sys.exit(1)" 2>/dev/null; then
-    echo "  ✘ 인터넷이 없다 — pip 으로 받을 수 없다." >&2
-    echo "     인터넷이 되는 곳에서 미리 깔아 두어야 한다 :" >&2
+    echo "  ✘ 인터넷 연결 없음 — pip 설치 불가" >&2
+    echo "     인터넷이 되는 환경에서 미리 설치하세요 :" >&2
     echo "       pip install \"lerobot[dataset,viz,feetech,smolvla]\"" >&2
-    echo "     또는 다른 PC 에서 받아 옮긴다 :" >&2
+    echo "     또는 다른 PC 에서 내려받아 복사하세요 :" >&2
     echo "       pip download <꾸러미> -d wheels/  →  pip install --no-index --find-links wheels/ <꾸러미>" >&2
     return 1
   fi
@@ -67,12 +67,12 @@ except Exception: sys.exit(1)" 2>/dev/null; then
   # extra 로 먼저 시도하고, lerobot 이 pip 로 안 잡히면 개별 꾸러미로 물러선다.
   python3 -m pip install "${PIPQ[@]}" "lerobot[dataset,viz,feetech,smolvla]" \
     || python3 -m pip install "${PIPQ[@]}" "pandas>=2.0.0,<3.0.0" "pyarrow>=21.0.0,<30.0.0" rerun-sdk || {
-    echo "  ✘ 설치 실패 — 인터넷이 안 되거나 권한이 없다." >&2
-    echo "     인터넷이 없으면 다른 PC 에서 받아 옮긴다 :" >&2
+    echo "  ✘ 설치 실패 — 인터넷 연결 또는 권한을 확인하세요." >&2
+    echo "     인터넷이 없으면 다른 PC 에서 내려받아 복사하세요 :" >&2
     echo "       pip download pandas pyarrow -d wheels/   →  pip install --no-index --find-links wheels/ pandas pyarrow" >&2
     return 1; }
-  if _edu_py_ok; then echo "  설치했다 ✔"; return 0; fi
-  echo "  ✘ 설치했는데도 불러오지 못한다." >&2; return 1
+  if _edu_py_ok; then echo "  설치 완료 ✔"; return 0; fi
+  echo "  ✘ 설치 후에도 불러오기 실패" >&2; return 1
 }
 
 edu_activate() {
@@ -81,12 +81,12 @@ edu_activate() {
   # ⓪ 사용자가 직접 지목한 파이썬이 있으면 그것부터
   if [[ -n "${EDU_PY:-}" && -x "$EDU_PY" ]]; then
     PATH="$(dirname "$EDU_PY"):$PATH"; export PATH
-    _edu_py_ok && { _edu_note "EDU_PY 로 지목한 파이썬을 쓴다 : $EDU_PY"; return 0; }
+    _edu_py_ok && { _edu_note "EDU_PY 지정 파이썬 사용 : $EDU_PY"; return 0; }
   fi
 
   # ① 이미 켜져 있나
   [[ "${CONDA_DEFAULT_ENV:-}" == "$env" ]] && _edu_py_ok && return 0
-  [[ -n "${VIRTUAL_ENV:-}" ]] && _edu_py_ok && { _edu_note "켜져 있는 venv 를 쓴다 : $VIRTUAL_ENV"; return 0; }
+  [[ -n "${VIRTUAL_ENV:-}" ]] && _edu_py_ok && { _edu_note "활성화된 venv 사용 : $VIRTUAL_ENV"; return 0; }
 
   # ② lerobot 명령이 PATH 에 있으면 그 환경이 이미 맞다.
   #    꾸러미만 모자란 경우가 흔하다 — 그때는 그 자리에서 채운다.
@@ -115,31 +115,32 @@ edu_activate() {
       conda activate "$envdir" 2>/dev/null || PATH="$envdir/bin:$PATH"
       export PATH
       if _edu_py_ok; then
-        _edu_note "환경 이름이 '$env' 이 아니다 — 찾은 것을 쓴다 : $envdir"
+        _edu_note "conda 환경 '$env' 대신 찾은 환경 사용 : $envdir"
         return 0
       fi
     done < <(conda env list 2>/dev/null | awk '!/^#/ && NF {print $NF}')
   done
 
   # ⑤ 흔한 venv 자리
-  for p in "$HOME/lerobot/.venv" "$HOME/.venv" "$HOME/venv" "./.venv" "./venv"; do
+  for p in "$HOME/lerobot/.venv" "$HOME/.venv" "$HOME/venv" "./.venv" "./venv" \
+           "$HOME/so101_lerobot_env" "$HOME/lerobot_env"; do
     [[ -x "$p/bin/python3" ]] || continue
     PATH="$p/bin:$PATH"; export PATH
-    _edu_py_ok && { _edu_note "venv 를 찾았다 : $p"; return 0; }
+    _edu_py_ok && { _edu_note "venv 사용 : $p"; return 0; }
   done
 
   # ⑥ 지금 파이썬이 쓸 만하면 그대로
-  _edu_py_ok && { _edu_note "conda 환경 '$env' 을 못 찾아 지금 파이썬을 그대로 쓴다."; return 0; }
+  _edu_py_ok && { _edu_note "conda 환경 '$env' 없음 — 현재 파이썬 사용"; return 0; }
   command -v python3 >/dev/null && edu_install_deps && return 0
 
-  echo "파이썬 환경을 못 잡았다. 이 폴더의 도구는 pandas · pyarrow 가 필요하다." >&2
-  echo "  가장 쉬운 길 — **쓰던 환경을 먼저 켜고** 다시 실행한다 :" >&2
+  echo "파이썬 환경 설정 실패 — pandas · pyarrow 가 필요합니다." >&2
+  echo "  가장 쉬운 방법 — 사용하던 환경을 먼저 활성화한 뒤 다시 실행하세요 :" >&2
   echo "      conda activate <환경이름>   (또는  source <venv>/bin/activate)" >&2
   echo "      bash edu-set.sh" >&2
-  echo "  아니면 아래 중 하나 :" >&2
-  echo "    · config.sh 의 CONDA_ENV 를 실제 환경 이름으로 고친다  (지금 : $env)" >&2
-  echo "    · config.sh 의 CONDA_SH 를 실제 conda.sh 경로로 고친다" >&2
-  echo "    · 파이썬을 직접 지목한다 :  EDU_PY=/경로/python3 bash edu-set.sh" >&2
+  echo "  또는 아래 중 하나 :" >&2
+  echo "    · config.sh 의 CONDA_ENV 를 실제 환경 이름으로 수정  (현재 : $env)" >&2
+  echo "    · config.sh 의 CONDA_SH 를 실제 conda.sh 경로로 수정" >&2
+  echo "    · 파이썬 직접 지정 :  EDU_PY=/경로/python3 bash edu-set.sh" >&2
   command -v conda >/dev/null && {
     echo "  이 PC 의 conda 환경 목록 :" >&2
     conda env list 2>/dev/null | awk '!/^#/ && NF {print "      "$0}' >&2; }
@@ -153,9 +154,9 @@ edu_open() {
     command -v "$b" >/dev/null || continue
     if [[ "$b" == "xdg-open" ]]; then "$b" "$url" >/dev/null 2>&1 &
     else "$b" --new-window "$url" >/dev/null 2>&1 & fi
-    echo "  열었습니다 ($b) : $url"; return 0
+    echo "  브라우저로 열림 ($b) : $url"; return 0
   done
-  echo "  브라우저를 못 찾았다 — 이 파일을 직접 연다 :" >&2
+  echo "  브라우저 없음 — 아래 파일을 직접 여세요 :" >&2
   echo "    $url" >&2
   return 0
 }

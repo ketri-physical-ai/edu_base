@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# 4-1 · 롤아웃 — 방금 학습한 모델을 실제 팔에 올려 굴린다.
+# 4-1 · 롤아웃 — 방금 학습한 모델로 실제 로봇팔을 구동한다.
 #      리더암은 쓰지 않는다. 로봇이 혼자 움직인다.
 #      ⚠ 처음 몇 초는 손을 팔 근처에 두고 언제든 끊을 준비를 한다.
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.sh"
 parse_args "$@"
 
 if [[ ! -f "${CKPT%/}/config.json" ]]; then
-  echo "체크포인트가 없다: $CKPT" >&2
-  echo "  → 먼저 edu3-1 을 끝낸다." >&2
-  echo "  → 중간 체크포인트를 쓰려면 config.sh 의 CKPT 를 고친다." >&2
+  echo "체크포인트 없음: $CKPT" >&2
+  echo "  → 먼저 edu3-1 로 학습하세요." >&2
+  echo "  → 중간 체크포인트를 쓰려면 config.sh 의 CKPT 를 수정하세요." >&2
   echo "     (예: .../checkpoints/010000/pretrained_model)" >&2
   exit 1
 fi
@@ -23,8 +23,8 @@ banner "4-1 · 롤아웃 (방금 학습한 모델)" \
         "추론 : $INFERENCE_TYPE" \
         "과제 : $TASK" \
         "" \
-        "원통을 여러 자리에 놓아 본다 — 어디서 실패하는지 적는다." \
-        "끝낼 때는 Ctrl+C."
+        "원통 위치를 바꿔 가며 실패하는 위치를 기록하세요." \
+        "종료 : Ctrl+C."
 
 need_ports "$FOLLOWER_PORT"
 gpu_guard
@@ -45,4 +45,4 @@ run_cmd lerobot-rollout \
   "${EXTRA[@]+"${EXTRA[@]}"}"
 
 echo
-echo "관찰을 한 줄 남긴다 :  $EDU_DIR/rollout-기록.md"
+echo "관찰 기록 :  $EDU_DIR/rollout-기록.md"

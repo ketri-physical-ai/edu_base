@@ -8,7 +8,7 @@ EDU_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 source "$EDU_DIR/config.sh"
 
 EDU_CANCEL=42
-trap 'echo; echo "중단했다 (Ctrl+C)."; exit 130' INT
+trap 'echo; echo "중단됨 (Ctrl+C)"; exit 130' INT
 
 # ── 파이썬 환경 ───────────────────────────────────────────────────
 # shellcheck disable=SC1091
@@ -19,7 +19,7 @@ if ! edu_activate; then
   EDU_ENV_BAD=1
 fi
 command -v lerobot-record >/dev/null || \
-  echo "  ⓘ lerobot 명령이 PATH 에 없다 — 보기·판정은 되지만 녹화·학습은 안 된다." >&2
+  echo "  ⓘ lerobot 명령 없음 — 확인·판정만 가능, 녹화·학습 불가" >&2
 export HF_LEROBOT_HOME="$LEROBOT_HOME"
 
 # meta/info.json 에서 값을 읽는다.
@@ -46,15 +46,15 @@ need_ports() {
   local p
   for p in "$@"; do
     if [[ ! -e "$p" ]]; then
-      echo "포트가 없다: $p" >&2
+      echo "포트 없음: $p" >&2
       echo "  붙어 있는 포트 :" >&2
       ls -1 /dev/ttyACM* /dev/ttyUSB* 2>/dev/null | sed 's/^/    /' >&2 || echo "    (없음)" >&2
-      echo "  → config.sh 의 FOLLOWER_PORT / LEADER_PORT 를 고친다." >&2
+      echo "  → config.sh 의 FOLLOWER_PORT / LEADER_PORT 를 확인하세요." >&2
       exit 1
     fi
     if command -v lsof >/dev/null 2>&1 && [[ -n "$(lsof -t "$p" 2>/dev/null)" ]]; then
-      echo "이미 다른 프로그램이 쓰는 중이다: $p" >&2
-      echo "  → 먼저 그 창을 끝낸다 (LeLab UI 도 포트를 잡는다)." >&2
+      echo "포트 사용 중: $p" >&2
+      echo "  → 사용 중인 프로그램을 종료한 뒤 다시 실행하세요 (LeLab UI 도 포트를 사용합니다)." >&2
       exit "$EDU_CANCEL"
     fi
   done
@@ -63,18 +63,18 @@ need_ports() {
 # ── GPU 확인 ──────────────────────────────────────────────────────
 gpu_guard() {
   if ! nvidia-smi >/dev/null 2>&1; then
-    echo "nvidia-smi 가 실패했다 — GPU 상태를 확인할 수 없다." >&2
-    echo "  '안 돌고 있다' 가 아니라 '확인 못 함' 이므로 진행하지 않는다." >&2
+    echo "nvidia-smi 실패 — GPU 상태 확인 불가" >&2
+    echo "  GPU 상태를 확인할 수 없어 실행하지 않습니다." >&2
     exit 1
   fi
   local busy
   busy="$(pgrep -af 'lerobot-(train|rollout|record)' 2>/dev/null)"
   if [[ -n "$busy" ]]; then
-    echo "⚠ GPU 를 쓰는 작업이 이미 돌고 있다 :" >&2
+    echo "⚠ GPU 사용 작업 실행 중 :" >&2
     printf '    %s\n' "$busy" >&2
-    echo "  같이 띄우면 돌던 학습이 죽는다." >&2
-    read -r -p "그래도 진행할까? [y/N] " a || exit "$EDU_CANCEL"
-    [[ "$a" =~ ^[Yy]$ ]] || { echo "취소했다."; exit "$EDU_CANCEL"; }
+    echo "  동시에 실행하면 진행 중인 학습이 중단될 수 있습니다." >&2
+    read -r -p "계속할까요? [y/N] " a || exit "$EDU_CANCEL"
+    [[ "$a" =~ ^[Yy]$ ]] || { echo "취소됨"; exit "$EDU_CANCEL"; }
   fi
 }
 
@@ -90,26 +90,26 @@ ask_delete() {
   local home_real; home_real="$(readlink -f "$LEROBOT_HOME")"
   case "$real" in
     "$home_real"/data/?*|"$home_real"/outputs/train/?*) ;;
-    *) echo "안전 범위 밖이라 손대지 않는다: $real" >&2; return 1 ;;
+    *) echo "안전 범위 밖 — 삭제 안 함: $real" >&2; return 1 ;;
   esac
   if [[ "$real" == "$home_real/data" || "$real" == "$home_real/outputs/train" ]]; then
-    echo "상위 디렉터리는 지우지 않는다: $real" >&2; return 1
+    echo "상위 폴더 — 삭제 안 함: $real" >&2; return 1
   fi
   echo
   echo "── 이미 있는 $what ────────────────────────────────"
   echo "  $real"
   echo "  크기 : $(du -sh "$real" 2>/dev/null | cut -f1)"
   if [[ -f "$real/meta/info.json" ]]; then
-    echo "  편수 : $(edu_meta "$real/meta/info.json" total_episodes)"
+    echo "  에피소드 : $(edu_meta "$real/meta/info.json" total_episodes)"
   fi
   echo "───────────────────────────────────────────────────"
   local prompt="[Y/n]"; [[ "$def" == "N" ]] && prompt="[y/N]"
-  read -r -p "지우고 새로 시작할까? $prompt " a || { echo "입력을 못 받았다 — 지우지 않았다." >&2; return 1; }
+  read -r -p "삭제하고 새로 시작할까요? $prompt " a || { echo "입력 없음 — 삭제 안 함" >&2; return 1; }
   [[ -z "$a" ]] && a="$def"
   if [[ "$a" =~ ^[Yy]$ ]]; then
-    rm -rf -- "$real" && echo "지웠다: $real" && return 0
+    rm -rf -- "$real" && echo "삭제 완료: $real" && return 0
   fi
-  echo "그대로 두었다."
+  echo "삭제 안 함"
   return 1
 }
 
@@ -120,11 +120,11 @@ run_cmd() {
   printf '  %s\n' "$@"
   echo "───────────────────────────────────────────────────"
   if [[ "${EDU_YES:-0}" != "1" ]]; then
-    if ! read -r -p "실행하나? [Y/n] " a; then
-      echo "입력을 받을 수 없다 — 실행하지 않았다. 터미널에서 직접 실행한다." >&2
+    if ! read -r -p "실행? [Y/n] " a; then
+      echo "입력 불가 — 실행 안 함. 터미널에서 직접 실행하세요." >&2
       exit 1
     fi
-    [[ -z "$a" || "$a" =~ ^[Yy]$ ]] || { echo "취소했다."; exit "$EDU_CANCEL"; }
+    [[ -z "$a" || "$a" =~ ^[Yy]$ ]] || { echo "취소됨"; exit "$EDU_CANCEL"; }
   fi
   # 명령 확인을 받은 뒤, 실행 직전에 한 번 더 알릴 것이 있으면 여기서 보여준다.
   # (녹화 중 조작법처럼 "읽고 시작해야 하는" 안내가 여기 온다)
@@ -132,10 +132,10 @@ run_cmd() {
     echo
     printf '%s\n' "$RUN_NOTICE"
     if [[ "${EDU_YES:-0}" != "1" ]]; then
-      if ! read -r -p "  확인했으면 [Enter] · [q] 취소 : " a; then
-        echo "입력을 받을 수 없다 — 실행하지 않았다." >&2; exit 1
+      if ! read -r -p "  확인했으면 [Enter] · 취소 [q] : " a; then
+        echo "입력 불가 — 실행 안 함" >&2; exit 1
       fi
-      [[ "$a" =~ ^[qQ]$ ]] && { echo "취소했다."; exit "$EDU_CANCEL"; }
+      [[ "$a" =~ ^[qQ]$ ]] && { echo "취소됨"; exit "$EDU_CANCEL"; }
     fi
   fi
 
@@ -146,12 +146,12 @@ run_cmd() {
   if [[ -n "$_cp" && -d "$_cp/lib" ]]; then
     export LD_LIBRARY_PATH="$_cp/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
   fi
-  # 걸개(RUN_FILTER) — 출력을 함수 하나에 통과시킨다. 편 사이 경계를 찍는 데 쓴다.
-  #   ⚠ 걸개는 INT 를 무시한다. Ctrl+C 로 걸개가 먼저 죽으면, 아직 영상을 저장 중인
+  # 출력 필터(RUN_FILTER) — 출력을 함수 하나에 통과시킨다. 에피소드 경계를 표시하는 데 쓴다.
+  #   ⚠ 필터는 INT 를 무시한다. Ctrl+C 로 필터가 먼저 죽으면, 아직 영상을 저장 중인
   #      lerobot 이 broken pipe 를 맞는다. EOF 까지 받아 흘려보내야 한다.
   #   ⚠ 파이프에 물리면 파이썬 stdout 이 블록 버퍼가 되어 늦게 몰려 나온다.
   #      정작 중요한 줄(logging)은 stderr 라 줄 단위로 나오지만, 나머지도 맞춘다.
-  #   ⚠ 종료코드는 파이프 맨 앞(=실제 명령) 것을 돌려준다. 걸개 것이 아니다.
+  #   ⚠ 종료코드는 파이프 맨 앞(=실제 명령) 것을 돌려준다. 필터 것이 아니다.
   if [[ -n "${RUN_FILTER:-}" ]]; then
     if [[ -n "${EDU_LOG:-}" ]]; then
       PYTHONUNBUFFERED=1 "$@" 2>&1 | { trap "" INT; "$RUN_FILTER"; } | tee -a "$EDU_LOG"
@@ -165,6 +165,70 @@ run_cmd() {
     return "${PIPESTATUS[0]}"
   fi
   "$@"
+}
+
+# ── 에피소드 경계 표시 ────────────────────────────────────────────
+#   2-1 · 2-3 이 RUN_FILTER=rec_filter 로 지정하면 run_cmd 가 부른다. lerobot 출력을 통과시킨다.
+#   ⚠ lerobot 이 낸 줄은 **하나도 지우지 않는다.** 경계에 표시만 얹는다.
+#
+#   경계 신호 (lerobot_record.py 의 실제 실행 순서)
+#     Recording episode N    에피소드 시작.  N 이 직전과 같으면 재녹화,
+#                            직전보다 크면 그때 비로소 직전 에피소드 저장이 확정된다
+#     Reset the environment  녹화 끝·리셋 시작
+#                            ⚠ 재녹화일 때도 뜬다 — 여기서 "저장" 을 단정하면 거짓말이 된다
+#     Re-record episode      직전 에피소드 폐기 확정 (Reset **뒤**에 온다)
+#     Stop recording         녹화 종료(2-3 은 세션 종료). 마지막 에피소드는 Reset 이 없어 여기서 닫힌다
+#
+#   ⚠ save_episode() 에는 로그가 없다. 그래서 저장 여부는 다음 에피소드 번호로만 안다.
+rec_filter() {
+  local line ep prev="" t0=$SECONDS dur i n msg pos
+  local C1="" C2="" C3="" C0=""
+  # 터미널이 아니면 색을 끈다 (로그 파일에 제어문자가 박히지 않게)
+  if [[ -t 1 ]]; then C1=$'\033[1;36m'; C2=$'\033[1;33m'; C3=$'\033[1;32m'; C0=$'\033[0m'; fi
+  local RULE="══════════════════════════════════════════════════════"
+  while IFS= read -r line; do
+    case "$line" in
+      *"Recording episode "*)
+        ep="${line##*Recording episode }"; ep="${ep%%[!0-9]*}"
+        if [[ -n "$prev" ]]; then
+          if [[ "$ep" == "$prev" ]]; then msg="폐기 (재녹화)"; else msg="저장됨"; fi
+          printf '%s\n' "${C3}└─ ep ${prev} ${msg}${C0}"
+        fi
+        printf '\n%s\n' "${C1}${RULE}${C0}"
+        if [[ "$ep" == "$prev" ]]; then
+          printf '%s\n' "${C1}┌─ ↺ ep ${ep} 재녹화   (녹화 ${EPISODE_TIME_S:-?}초)${C0}"
+        else
+          n=$(( ${TO:-0} - ${FROM:-0} + 1 )); i=$(( ep - ${FROM:-0} + 1 ))
+          # SNO(세션 번호)는 2-3 에만 있다. 2-1 은 진행 개수만 보인다.
+          if [[ -n "${SNO:-}" ]]; then pos="S${SNO} ${i}/${n}   전체 ${ep}/${TOTAL:-?}"
+          else                         pos="${i}/${n}"; fi
+          printf '%s\n' "${C1}┌─ ● ep ${ep} 시작   ${pos}   (녹화 ${EPISODE_TIME_S:-?}초)${C0}"
+        fi
+        printf '%s\n' "${C1}${RULE}${C0}"
+        prev="$ep"; t0=$SECONDS
+        printf '%s\n' "$line"
+        ;;
+      *"Reset the environment"*)
+        dur=$(( SECONDS - t0 ))
+        printf '%s\n' "${C2}├─ ep ${prev} 녹화 종료 (${dur}초) · 리셋 ${RESET_TIME_S:-?}초 — 원통을 제자리로${C0}"
+        printf '%s\n' "$line"
+        ;;
+      *"Re-record episode"*)
+        printf '%s\n' "${C2}├─ ↺ 직전 에피소드 폐기${C0}"
+        printf '%s\n' "$line"
+        ;;
+      *"Stop recording"*)
+        [[ -n "$prev" ]] && printf '%s\n' "${C3}└─ ep ${prev} 저장됨${C0}"
+        printf '\n%s\n' "${C1}${RULE}${C0}"
+        if [[ -n "${SNO:-}" ]]; then printf '%s\n' "${C1}■ 세션 종료${C0}"
+        else                         printf '%s\n' "${C1}■ 녹화 종료${C0}"; fi
+        printf '%s\n'   "${C1}${RULE}${C0}"
+        prev=""
+        printf '%s\n' "$line"
+        ;;
+      *) printf '%s\n' "$line" ;;
+    esac
+  done
 }
 
 # ── -y / --yes 를 걷어내고 나머지는 EXTRA 로 ──────────────────────

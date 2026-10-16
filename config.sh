@@ -58,7 +58,7 @@ CAM_FPS="${CAM_FPS:-30}"
 
 # ── 과제 문장 ─────────────────────────────────────────────────────
 #   ⚠ 한 데이터셋 안에서는 절대 바꾸지 않는다.
-#      이어찍을 때 문장이 다르면 데이터셋이 두 과제로 갈라진다.
+#      이어서 녹화할 때 문장이 다르면 데이터셋이 두 과제로 갈라진다.
 TASK="${TASK:-Put the red cylinder into the cup}"
 
 # 로봇 화면(rerun) 을 띄울지. rerun-sdk 가 없는 PC 면 false 로 두면 그대로 돈다.
@@ -74,23 +74,28 @@ EDU_TEST_REPO_ID="${EDU_TEST_REPO_ID:-data/$EDU_TEST_NAME}"
 EDU_TEST_ROOT="${EDU_TEST_ROOT:-$LEROBOT_HOME/$EDU_TEST_REPO_ID}"
 
 # ── 녹화 값 ───────────────────────────────────────────────────────
-NUM_EPISODES="${NUM_EPISODES:-100}"       # 2-3 실제 녹화 편수 (1차)
-ADD_EPISODES="${ADD_EPISODES:-30}"        # 2-3 이어찍기로 보강할 편수 (2차)
-SESSION_SIZE="${SESSION_SIZE:-10}"        # 2-3 한 번에 찍는 묶음 크기
+NUM_EPISODES="${NUM_EPISODES:-100}"       # 2-3 실제 녹화 에피소드 수 (1차)
+ADD_EPISODES="${ADD_EPISODES:-30}"        # 2-3 추가 녹화로 보강할 에피소드 수 (2차)
+SESSION_SIZE="${SESSION_SIZE:-10}"        # 2-3 세션당 에피소드 수
 
 # ── 골든 데이터셋 (2-4 병합용) ────────────────────────────────────
-#   미리 잘 찍어 둔 기준 데이터. 2-3 으로 찍은 것에 합쳐 학습 재료를 보강한다.
+#   미리 녹화해 둔 기준 데이터. 2-3 녹화본에 병합해 학습 데이터를 보강한다.
 #   ⚠ 합치려면 **fps · 카메라 구성 · 과제 문장이 같아야** 한다.
 GOLDEN_NAME="${GOLDEN_NAME:-so101_golden}"
 GOLDEN_ROOT="${GOLDEN_ROOT:-$EDU_HOME/golden/$GOLDEN_NAME}"
+
+# ── 골든 학습 로그 (3-2 로 기준 곡선을 보여줄 때) ─────────────────
+#   골든 모델을 만든 그 학습의 stdout 로그.  edu3-2 --golden 으로 이걸 그린다.
+#   ⚠ 비워두거나 파일이 없으면 3-2 가 평소대로 내 학습 로그(OUT_NAME)를 찾는다.
+GOLDEN_LOG="${GOLDEN_LOG:-$EDU_HOME/golden/act_edu3_100-golden.log}"
 
 #   병합 결과가 저장될 자리 (데이터 루트 밑 — 폴더 안이 아니다)
 MERGED_NAME="${MERGED_NAME:-${EDU_NAME}_merged}"
 MERGED_REPO_ID="${MERGED_REPO_ID:-data/$MERGED_NAME}"
 MERGED_ROOT="${MERGED_ROOT:-$LEROBOT_HOME/$MERGED_REPO_ID}"
-TEST_EPISODES="${TEST_EPISODES:-2}"       # 2-1 연습 녹화 편수
-EPISODE_TIME_S="${EPISODE_TIME_S:-20}"    # 한 편 제한시간(초)
-RESET_TIME_S="${RESET_TIME_S:-5}"         # 편 사이 원통 되돌리는 시간(초)
+TEST_EPISODES="${TEST_EPISODES:-2}"       # 2-1 연습 녹화 에피소드 수
+EPISODE_TIME_S="${EPISODE_TIME_S:-20}"    # 에피소드당 녹화시간(초)
+RESET_TIME_S="${RESET_TIME_S:-5}"         # 에피소드 사이 리셋 대기시간(초)
 
 # ── 학습 값 ───────────────────────────────────────────────────────
 #   ACT 기준 실측(RTX 5080) : 배치 8 = 11.34 step/s · 배치 16 = 5.95 step/s
@@ -127,6 +132,9 @@ INFERENCE_TYPE="${INFERENCE_TYPE:-sync}"  # ACT=sync · SmolVLA 등 느린 VLA=r
 #   폴더 안에 같이 옮긴 안정본. 다른 모델로 바꾸려면 아래 세 줄만 고친다.
 #     · ACT   → INFERENCE_TYPE=sync · RENAME_MAP 은 비운다
 #     · SmolVLA → INFERENCE_TYPE=rtc  · RENAME_MAP 을 채운다 (카메라 이름이 다르다)
+#   지금 들어 있는 것 : act_edu3_100 의 060000 체크포인트
+#     골든 데이터 so101_edu3(에피소드 100개·fps 30·top/wrist) 로 ACT 60,000 step.
+#     같은 학습의 곡선이 golden/act_edu3_100-golden.log (edu3-2 --golden).
 STABLE_CKPT="${STABLE_CKPT:-$EDU_HOME/models/act_golden}"
 STABLE_INFERENCE_TYPE="${STABLE_INFERENCE_TYPE:-sync}"
 STABLE_TASK="${STABLE_TASK:-$TASK}"

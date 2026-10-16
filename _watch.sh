@@ -11,7 +11,7 @@
 #    이미 도는 학습에는 못 붙이므로, stdout 로그에서 뽑는 이 도구가 대안이다.
 #    다음부터 처음부터 W&B 를 쓸 거면 학습 명령에 그 플래그를 넣으면 된다.
 #
-#  읽는 것 : lerobot-train 이 log_freq(기본 200)마다 찍는 INFO 줄
+#  읽는 것 : lerobot-train 이 log_freq(기본 200)마다 출력하는 INFO 줄
 #    step:200 smpl:3K ep:7 epch:0.04 loss:0.360 grdn:4.323 lr:1.0e-05 ...
 #    같은 물리 줄 앞에 tqdm 이 "| 200/60000 [00:35<2:51:36, 5.81step/s]" 를 붙인다.
 #    step 값은 10000 을 넘으면 "10K" 로 뭉개지므로 **tqdm 쪽 숫자를 우선** 쓴다.
@@ -36,20 +36,20 @@ for a in "$@"; do
         --no-open) OPEN=0 ;;
         --follow)  FOLLOW=1 ;;
         --interval=*) INTERVAL="${a#*=}" ;;
-        -*) echo "❌ 모르는 옵션 : $a" >&2; exit 2 ;;
-        *)  [ -f "$a" ] || { echo "❌ 그런 파일이 없다 : $a" >&2; exit 2; }
+        -*) echo "❌ 알 수 없는 옵션 : $a" >&2; exit 2 ;;
+        *)  [ -f "$a" ] || { echo "❌ 파일 없음 : $a" >&2; exit 2; }
             LOGS+=("$a") ;;
     esac
 done
 
 if [ ${#LOGS[@]} -eq 0 ]; then
     echo "사용법 : train-watch.sh <학습로그파일...> [--follow] [--no-open] [--interval=N]" >&2
-    echo "  이어학습이면 로그를 순서대로 여러 개 준다 :" >&2
+    echo "  이어학습이면 로그 여러 개를 순서대로 지정하세요 :" >&2
     echo "    train-watch.sh 1차.log 재개.log --follow" >&2
     exit 2
 fi
 
-# 마지막 로그가 현재 도는 판이다 — 갱신 감시와 파일명은 이걸 기준으로 한다
+# 마지막 로그가 현재 실행 중인 학습이다 — 갱신 감시와 파일명은 이걸 기준으로 한다
 LOG="${LOGS[${#LOGS[@]}-1]}"
 
 OUT_DIR="/tmp/trainwatch"
@@ -79,7 +79,7 @@ def num(v):
     m = {"K": 1e3, "M": 1e6, "G": 1e9}
     return float(v[:-1]) * m[v[-1]] if v and v[-1] in m else float(v)
 
-# ⚠ 이어학습(--resume)이면 tqdm 이 **이번 판만** 센다 (예: 832/10000 인데 실제는 20,832).
+# ⚠ 이어학습(--resume)이면 tqdm 이 **이번 실행분만** 센다 (예: 832/10000 인데 실제는 20,832).
 #   INFO 의 step: 은 전역 값이지만 10,000 을 넘으면 "21K" 로 뭉개져 못 쓴다.
 #   설정의 steps 와 tqdm 총량의 차가 곧 시작 지점이다 — 반올림 없이 정확하다.
 #     1차   : 설정 60,000 · tqdm 총량 60,000 → 보정 0
@@ -120,7 +120,7 @@ for r in rows:
     seen[r["step"]] = r
 rows = [seen[k] for k in sorted(seen)]
 
-# 학습률 설명은 정책마다 다르다 — 로그에 찍힌 값으로 판단한다.
+# 학습률 설명은 정책마다 다르다 — 로그에 출력된 값으로 판단한다.
 #   ACT 는 스케줄러가 없어(get_scheduler_preset -> None) 값이 고정이다.
 #   SmolVLA 등은 warmup + cosine decay 라 올랐다 내려간다.
 _lrv = sorted({r["lr"] for r in rows if "lr" in r})
@@ -337,7 +337,7 @@ Path(out).write_text(
     f"{'· 20초마다 자동 갱신' if follow else '· 정지 화면'}</p>"
     f"<div class='tiles'>{tile_html}</div>{figs}"
     f"<details><summary>표로 보기 (최근 40개)</summary>{table}</details>"
-    f"<p class='foot'>lerobot-train 이 log_freq 마다 찍는 stdout 을 읽는다. "
+    f"<p class='foot'>lerobot-train 이 log_freq 마다 출력하는 stdout 을 읽는다. "
     f"W&amp;B 없이 동작하며 전부 로컬 처리다.</p>"
     f"</main><script>window.__D__={json.dumps(data)};{JS}</script></body></html>",
     encoding="utf-8")
@@ -355,13 +355,13 @@ if [ "$OPEN" -eq 1 ]; then
     #   (2026-08-11 실제로 그랬다).
     edu_open "file://$OUT?t=$(date +%s)"
         [ "$FOLLOW" -eq 1 ] \
-        && echo "  ${INTERVAL:-20}초마다 자동 갱신된다" \
-        || echo "  ⚠ 정지 화면이다. 자동 갱신하려면 --follow, 수동이면 그 탭에서 F5"
+        && echo "  ${INTERVAL:-20}초마다 자동 갱신" \
+        || echo "  ⚠ 정지 화면 — 자동 갱신 : --follow · 수동 갱신 : 해당 탭에서 F5"
 fi
 
 if [ "$FOLLOW" -eq 1 ]; then
-    echo "${INTERVAL}초마다 갱신한다. 멈추려면 Ctrl+C."
-    echo "로그가 ${IDLE_STOP:-5}회 연속 안 늘면 (학습 종료·중단으로 보고) 스스로 멈춘다."
+    echo "${INTERVAL}초마다 갱신 · 종료 : Ctrl+C"
+    echo "로그가 ${IDLE_STOP:-5}회 연속 늘지 않으면 (학습 종료로 판단) 자동 종료"
     # 갱신 비용은 실측 무시할 수준이다 — 60초에 198회를 때려박아도 학습이 3% 느려졌고,
     # 20초 간격이면 그 3분의 1이라 스텝 편차에 묻힌다. GPU 는 전혀 쓰지 않는다.
     # 그래도 루프를 영원히 두지는 않는다. 학습이 끝나면 로그가 안 늘므로 그때 빠져나간다.
@@ -373,7 +373,7 @@ if [ "$FOLLOW" -eq 1 ]; then
             idle=$(( idle + 1 ))
             if [ "$idle" -ge "${IDLE_STOP:-5}" ]; then
                 render >/dev/null
-                echo "로그가 $(( IDLE_STOP_S = ${IDLE_STOP:-5} * INTERVAL ))초 동안 안 늘었다 — 갱신을 멈춘다."
+                echo "로그가 $(( IDLE_STOP_S = ${IDLE_STOP:-5} * INTERVAL ))초 동안 늘지 않음 — 갱신 종료"
                 echo "마지막 상태 : file://$OUT"
                 break
             fi

@@ -6,8 +6,8 @@ parse_args "$@"
 
 banner "1-2 · 텔레옵 + 카메라" \
         "카메라 top(${CAM_TOP}) · wrist(${CAM_WRIST})" \
-        "창이 두 개 뜬다. 원통과 컵이 화면 안에 들어오게 카메라를 맞춘다." \
-        "끝낼 때는 Ctrl+C."
+        "카메라 창 2개 표시 · 원통과 컵이 화면 안에 들어오도록 카메라를 조정하세요." \
+        "종료 : Ctrl+C."
 
 need_ports "$FOLLOWER_PORT" "$LEADER_PORT"
 

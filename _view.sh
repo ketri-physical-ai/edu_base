@@ -3,13 +3,13 @@
 #  drum3-view.sh — 녹화한 에피소드를 Chrome 탭에서 확인한다
 #
 #  사용:
-#    bash _view.sh red_a1          # 세션 전체 (판별로 나열)
-#    bash _view.sh red_a1 9        # 9번 판만
-#    bash _view.sh red_a1 3-6      # 3~6번 판
+#    bash _view.sh red_a1          # 세션 전체 (에피소드별로 나열)
+#    bash _view.sh red_a1 9        # 9번 에피소드만
+#    bash _view.sh red_a1 3-6      # 3~6번 에피소드
 #    bash _view.sh red_a1_old      # 백업 폴더도 그대로 열린다
 #    bash _view.sh red_a1 --no-open
 #
-#  ⚠ v3 데이터셋은 여러 판이 mp4 하나에 이어붙어 있다. 판마다 파일이 따로 있지 않다.
+#  ⚠ v3 데이터셋은 여러 에피소드가 mp4 하나에 이어붙어 있다. 에피소드마다 파일이 따로 있지 않다.
 #    그래서 meta/episodes 의 from_timestamp~to_timestamp 를 읽어 그 구간만 반복 재생한다.
 #    (인코딩을 다시 하지 않으므로 즉시 뜨고 원본을 건드리지 않는다)
 #
@@ -27,7 +27,7 @@ source "$_SELF_DIR/config.sh"
 #   VIEW_BASE=<폴더> bash _view.sh so101_slot_p1_red
 BASE="${VIEW_BASE:-$LEROBOT_HOME/data}"
 
-NAME="${1:?사용법: drum3-view.sh <이름꼬리> [판번호|시작-끝] [--no-open]}"
+NAME="${1:?사용법: _view.sh <이름꼬리> [에피소드번호|시작-끝] [--no-open]}"
 shift
 
 SEL=""
@@ -43,8 +43,8 @@ done
 if   [ -d "$BASE/so101_drum3_$NAME" ]; then ROOT="$BASE/so101_drum3_$NAME"
 elif [ -d "$BASE/$NAME" ];             then ROOT="$BASE/$NAME"
 else
-    echo "❌ 그런 세션이 없다 : $NAME" >&2
-    echo "   있는 것 :" >&2
+    echo "❌ 세션 없음 : $NAME" >&2
+    echo "   사용 가능한 세션 :" >&2
     ls -1 "$BASE" 2>/dev/null | sed 's/^/     /' >&2
     exit 1
 fi
@@ -91,7 +91,7 @@ if JOINTS:
         MOT = None            # 데이터가 없거나 형식이 다르면 그래프만 건너뛴다
 
 def motor_svg(ep_i):
-    """한 편의 관절 6개를 작은 그래프 6장으로. 실선=실제, 점선=명령."""
+    """에피소드 하나의 관절 6개를 작은 그래프 6장으로. 실선=실제, 점선=명령."""
     if MOT is None:
         return ""
     d = MOT[MOT.episode_index == ep_i]
@@ -134,11 +134,11 @@ def motor_svg(ep_i):
             '<i class="k-cmd"></i>명령(리더)</span></summary>'
             f'<div class="mgrid" data-x0="{PAD}" data-x1="{W-6}">{"".join(panels)}</div>'
             '<p class="mnote">Δ 는 명령과 실제의 평균 차이(도). '
-            '무거운 관절일수록 크다 — 팔이 명령을 뒤따라간다는 뜻이다. '
-            '<b>세로선이 영상 재생 위치다. 그래프를 누르면 그 시점으로 영상이 넘어간다.</b>'
+            '무거운 관절일수록 큽니다 — 팔이 명령을 뒤따라간다는 뜻입니다. '
+            '<b>세로선은 영상 재생 위치입니다. 그래프를 누르면 해당 시점으로 영상이 이동합니다.</b>'
             '</p></details>')
 
-# ── 이상한 판 자동 표시 (지우지 않는다 — 표시만) ─────────────────
+# ── 이상 에피소드 자동 표시 (지우지 않는다 — 표시만) ──────────────
 #   기준은 이 데이터셋 자신의 중앙값이다. 과제마다 길이가 달라 고정값을 못 쓴다.
 SHORT_R = float(os.environ.get("VIEW_SHORT_RATIO", "0.55"))
 LONG_R  = float(os.environ.get("VIEW_LONG_RATIO",  "1.45"))
@@ -156,14 +156,14 @@ def _flag(i, why, lvl="err"):
 
 lens = {int(r.episode_index): int(r.length) for _, r in df.iterrows()}
 # 시간상한 판정 — 두 갈래로 본다.
-#   ① 녹화 설정을 아는 경우 : 상한 프레임에 닿은 판이 상한이다.
-#   ② 모르는 경우 : 최대 길이를 두 판 이상이 공유하고, **그 값이 중앙값보다
+#   ① 녹화 설정을 아는 경우 : 상한 프레임에 닿은 에피소드가 상한이다.
+#   ② 모르는 경우 : 최대 길이를 두 에피소드 이상이 공유하고, **그 값이 중앙값보다
 #      뚜렷이 클 때만** 상한으로 본다. 우연히 길이가 겹친 것을 상한이라 부르면
-#      멀쩡한 판이 걸린다 (실제로 7.8초를 20초 상한이라 오판한 적이 있다).
+#      멀쩡한 에피소드가 걸린다 (실제로 7.8초를 20초 상한이라 오판한 적이 있다).
 _EPT  = float(os.environ.get("EP_TIME_S", "0") or 0)
 _CAPF = round(_EPT * fps) if _EPT > 0 else 0
 CAPPED = set()
-#   상한에 걸린 판은 그 값을 **넘지 않고 정확히 닿는다**. 넘었으면 그 설정이 아니다.
+#   상한에 걸린 에피소드는 그 값을 **넘지 않고 정확히 닿는다**. 넘었으면 그 설정이 아니다.
 if _CAPF and lens and any(abs(L - _CAPF) <= 2 for L in lens.values()):
     CAPPED = {i for i, L in lens.items() if abs(L - _CAPF) <= 2}
 if not CAPPED and lens:
@@ -175,13 +175,13 @@ _lens = lens
 if MED > 0:
     for i, L in _lens.items():
         if i in CAPPED:
-            _flag(i, f"시간상한에 걸림 ({L/fps:.1f}초 — 끝까지 못 끝냈다)")
+            _flag(i, f"시간상한 도달 ({L/fps:.1f}초 — 과제 미완료)")
         elif L < MED * SHORT_R:
-            _flag(i, f"너무 짧다 ({L/fps:.1f}초 · 보통 {MED/fps:.1f}초)", "note")
+            _flag(i, f"너무 짧음 ({L/fps:.1f}초 · 보통 {MED/fps:.1f}초)", "note")
         elif L > MED * LONG_R:
-            _flag(i, f"너무 길다 ({L/fps:.1f}초 · 보통 {MED/fps:.1f}초)", "note")
+            _flag(i, f"너무 김 ({L/fps:.1f}초 · 보통 {MED/fps:.1f}초)", "note")
 
-# 어긋난 판 : 데이터 행 수와 영상 구간 길이가 안 맞는다 (녹화 중 끊김·인코딩 오류).
+# 어긋난 에피소드 : 데이터 행 수와 영상 구간 길이가 안 맞는다 (녹화 중 끊김·인코딩 오류).
 #   카메라마다 값이 다르면 두 스트림이 서로 틀어진 것이라 더 나쁘다.
 for _, r in df.iterrows():
     i, n = int(r.episode_index), int(r.length)
@@ -199,13 +199,13 @@ for _, r in df.iterrows():
     segs = set(hits.values())
     if len(segs) == 1 and len(hits) == len(vkeys):
         seg = segs.pop()
-        _flag(i, f"어긋난 판 — 데이터 {n}행 / 영상 {seg}프레임 ({seg-n:+d})")
+        _flag(i, f"어긋난 에피소드 — 데이터 {n}행 / 영상 {seg}프레임 ({seg-n:+d})")
     else:
         detail = " · ".join(f"{c} {v}프레임({v-n:+d})" for c, v in sorted(hits.items()))
-        _flag(i, f"어긋난 판 — 카메라마다 다르다 (데이터 {n}행 · {detail})")
+        _flag(i, f"어긋난 에피소드 — 카메라별 불일치 (데이터 {n}행 · {detail})")
 
-# 영상 구간 겹침 = 녹화 오류로 같은 장면이 두 판에 들어간 것.
-#   카메라별로 따로 찍으면 같은 말이 두 번 나오므로 판 짝마다 하나로 합친다.
+# 영상 구간 겹침 = 녹화 오류로 같은 장면이 두 에피소드에 들어간 것.
+#   카메라별로 따로 출력하면 같은 말이 두 번 나오므로 에피소드 쌍마다 하나로 합친다.
 _dup = {}                                    # (ep1, ep2) -> {cam: (겹침초, 완전동일)}
 for key in vkeys:
     try:
@@ -227,12 +227,12 @@ for key in vkeys:
 for (i1, i2), cams in _dup.items():
     allsame = all(v[1] for v in cams.values())
     ov = max(v[0] for v in cams.values())
-    what = "완전히 같다" if allsame else f"{ov:.1f}초 겹친다"
+    what = "완전히 동일" if allsame else f"{ov:.1f}초 겹침"
     who = "영상" if len(cams) == len(vkeys) else " · ".join(sorted(cams))
     _flag(i1, f"영상 중복 — {who} 구간이 ep {i2} 와 {what}")
     _flag(i2, f"영상 중복 — {who} 구간이 ep {i1} 와 {what}")
 
-# 판 고르기 : "9" 또는 "3-6"
+# 에피소드 선택 : "9" 또는 "3-6"
 if sel:
     if "-" in sel:
         lo, hi = (int(x) for x in sel.split("-", 1))
@@ -240,11 +240,11 @@ if sel:
     else:
         df = df[df.episode_index == int(sel)]
     if df.empty:
-        raise SystemExit(f"❌ 그 범위에 판이 없다 : {sel}")
+        raise SystemExit(f"❌ 해당 범위에 에피소드 없음 : {sel}")
 
-# ⚠ 판을 고른 뒤에 센다 — 거르기 전에 세면 묶음만 열어도 접힌다.
-# 편이 많은데 그래프를 다 펼치면 브라우저가 멈춘다 (117편 = 5MB · polyline 1400개).
-# 묶음 단위로 볼 때만 펼치고, 많이 열면 접어 둔다.
+# ⚠ 에피소드를 고른 뒤에 센다 — 거르기 전에 세면 세션만 열어도 접힌다.
+# 에피소드가 많은데 그래프를 다 펼치면 브라우저가 멈춘다 (117개 = 5MB · polyline 1400개).
+# 세션 단위로 볼 때만 펼치고, 많이 열면 접어 둔다.
 OPEN_MAX = int(os.environ.get("VIEW_OPEN_MAX", "12"))
 BIG      = len(df) > OPEN_MAX
 MOT_OPEN = "" if BIG else " open"
@@ -283,7 +283,7 @@ for _, ep in df.iterrows():
     chk = ' checked' if nerr else ''
     cards.append(
         f'<section data-ep="{i}"{odd_cls}><h2>ep {i}{badges}'
-        f'<label class="pick"><input type="checkbox" class="ck" value="{i}"{chk}> 지울 판</label>'
+        f'<label class="pick"><input type="checkbox" class="ck" value="{i}"{chk}> 삭제</label>'
         f'</h2>'
         f'<p class="meta">{n} 프레임 · {n / fps:.1f}초 · <code>{html.escape(tasks)}</code></p>'
         f'<div class="row">{"".join(vids)}</div>'
@@ -336,7 +336,7 @@ code{background:var(--code-bg);padding:.12em .4em;border-radius:4px;font-size:.9
 .mnote{font-size:.8em;color:var(--muted);margin:8px 0 0}
 section.odd .mot{opacity:1}
 
-/* 이상한 판 표시 — 지우지 않는다 */
+/* 이상 에피소드 표시 — 지우지 않는다 */
 h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pick{margin-left:auto;font-size:.72em;font-weight:400;color:var(--muted);cursor:pointer;
   border:1px solid var(--line);border-radius:6px;padding:2px 9px;user-select:none;white-space:nowrap}
@@ -367,10 +367,10 @@ body.onlyodd section[data-ep]:not(.odd):not(.note){display:none}
 #done{color:var(--accent)}
 """
 
-# 이어붙은 mp4 에서 그 판 구간만 반복 재생한다.
+# 이어붙은 mp4 에서 해당 에피소드 구간만 반복 재생한다.
 # 미디어 프래그먼트(#t=) 대신 JS 로 잡는 이유 : 로컬 파일에서 더 확실하다.
 JS = """
-// 재생속도 기본 1.5배. 검수는 「이상한 판을 찾는」 작업이라 1배는 느리다.
+// 재생속도 기본 1.5배. 검수는 「이상 에피소드를 찾는」 작업이라 1배는 느리다.
 // playbackRate 는 요소마다 걸어야 하고, 소스를 다시 읽으면 초기화되므로
 // loadedmetadata 에서도 한 번 더 건다.
 let RATE = 1.5;
@@ -385,9 +385,9 @@ document.querySelectorAll('video').forEach(v=>{
   v.playbackRate = RATE;
 });
 
-// ── 이상한 판 ────────────────────────────────────────────────────
+// ── 이상 에피소드 ────────────────────────────────────────────────
 // **여기서 아무것도 지우지 않는다.** 찾아서 표시하고 번호를 알려줄 뿐이다.
-// 다시 찍을지 그냥 둘지는 사람이 판단한다.
+// 재녹화할지 그냥 둘지는 사람이 판단한다.
 const out  = document.getElementById('sel');
 const done = document.getElementById('done');
 const picks = () => [...document.querySelectorAll('.ck:checked')]
@@ -402,7 +402,7 @@ function refresh(){
   done.textContent = '';
 }
 document.addEventListener('change', e=>{ if(e.target.classList.contains('ck')) refresh(); });
-refresh();   // 이상한 판은 미리 켜져 있다
+refresh();   // 이상 에피소드는 미리 켜져 있다
 
 document.getElementById('clear').onclick = ()=>{
   document.querySelectorAll('.ck').forEach(x=>x.checked=false); refresh();
@@ -410,20 +410,20 @@ document.getElementById('clear').onclick = ()=>{
 
 document.getElementById('copy').onclick = async ()=>{
   const odd = picks();
-  if(!odd.length){ done.textContent = '고른 판이 없다'; return; }
+  if(!odd.length){ done.textContent = '선택한 에피소드 없음'; return; }
   const t = odd.join(',');
   try { await navigator.clipboard.writeText(t); done.textContent = '번호 복사됨'; }
   catch(_) {
     const e=document.createElement('textarea'); e.value=t; document.body.appendChild(e);
     e.select(); try{document.execCommand('copy'); done.textContent='번호 복사됨';}
-    catch(__){ done.textContent='복사 실패 — 위 번호를 직접 옮겨라'; }
+    catch(__){ done.textContent='복사 실패 — 위 번호를 직접 입력하세요'; }
     e.remove();
   }
 };
 const only = document.getElementById('only');
 only.onclick = ()=>{
   document.body.classList.toggle('onlyodd');
-  only.textContent = document.body.classList.contains('onlyodd') ? '전체 보기' : '표시된 판만';
+  only.textContent = document.body.classList.contains('onlyodd') ? '전체 보기' : '표시된 에피소드만';
   done.textContent = '';
 };
 if(!document.querySelector('section.odd, section.note')) only.disabled = true;
@@ -472,8 +472,8 @@ document.querySelectorAll('section[data-ep]').forEach(sec=>{
 });
 
 // ── 모터 그래프 ↔ 영상 동기 ─────────────────────────────────────
-// 영상은 긴 mp4 의 한 구간(a~b)이고 그래프는 그 편의 전체 길이다.
-// 둘 다 같은 편을 담으므로 진행률(0~1)로 바로 이어 붙는다.
+// 영상은 긴 mp4 의 한 구간(a~b)이고 그래프는 그 에피소드의 전체 길이다.
+// 둘 다 같은 에피소드를 담으므로 진행률(0~1)로 바로 이어 붙는다.
 document.querySelectorAll('section[data-ep]').forEach(sec=>{
   const mot  = sec.querySelector('.mot');
   const grid = sec.querySelector('.mgrid');
@@ -517,10 +517,10 @@ refresh();
 """
 
 BAR = ("<div id='bar'>"
-       "<span>고른 판 <span id='sel'>없음</span></span>"
+       "<span>선택 <span id='sel'>없음</span></span>"
        "<button id='copy'>번호 복사</button>"
        "<button id='clear'>선택 해제</button>"
-       "<button id='only'>표시된 판만</button>"
+       "<button id='only'>표시된 에피소드만</button>"
        "<span id='done'></span>"
        "<span class='grow'></span>"
        "<label>속도 <select id='rate'>"
@@ -537,11 +537,11 @@ open(out, "w", encoding="utf-8").write(
     f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
     f"<title>{html.escape(title)}</title><style>{CSS}</style></head><body><main>"
     f"<h1>{html.escape(root.name)}</h1>"
-    f"<p class='sub'>{'⚠ 편이 많아 모터 그래프를 접어 두었다 (제목을 누르면 펼쳐진다) · ' if BIG else ''}{len(df)}판 표시 · 전체 {info['total_episodes']}판 / {info['total_frames']:,}프레임 · {fps}fps"
+    f"<p class='sub'>{'⚠ 에피소드가 많아 모터 그래프를 접어 두었습니다 (제목을 누르면 펼쳐집니다) · ' if BIG else ''}에피소드 {len(df)}개 표시 · 전체 {info['total_episodes']}개 / {info['total_frames']:,}프레임 · {fps}fps"
     f" · <code>{html.escape(str(root))}</code></p>"
     f"{''.join(cards)}</main>{BAR}<script>{JS}</script></body></html>"
 )
-print(f"렌더링 완료: {out}  ({len(df)}판)")
+print(f"렌더링 완료: {out}  (에피소드 {len(df)}개)")
 PY
 
 if [[ $OPEN -eq 1 ]]; then
