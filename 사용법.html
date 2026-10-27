@@ -194,7 +194,7 @@
   <div class="one">
     <code>bash ~/edu_base/edu-set.sh</code>
     <p>새 PC 에서는 <strong>이 한 줄</strong>만 입력하면 됩니다 — 실행 권한 · 파이썬 환경 · 단축 명령 등록 ·
-       포트 · 카메라 · 준비 점검을 한 번에 진행합니다. 완료 후에는 어느 폴더에서든 <code>edu1-1</code> 처럼 바로 실행할 수 있습니다.</p>
+       포트 · 카메라 · 준비 점검을 한 번에 진행합니다. 완료 후에는 어느 폴더에서든 <code>edu0-1</code> 처럼 바로 실행할 수 있습니다.</p>
   </div>
 
   <section class="sec">
@@ -249,9 +249,11 @@
   <section class="sec">
     <div class="num">나</div>
     <div class="col">
-      <h2>명령 10개</h2>
+      <h2>명령 12개</h2>
       <div class="cmds">
         <div class="cmd"><b>edu-set</b><span>포트 · 카메라 · 준비 점검</span><i>자동 종료</i></div>
+        <div class="cmd"><b>edu0-1</b><span>팔로워 보정</span><i>자동 종료</i></div>
+        <div class="cmd"><b>edu0-2</b><span>리더 보정</span><i>자동 종료</i></div>
         <div class="cmd"><b>edu1-1</b><span>텔레옵 — 팔만 (카메라 없이)</span><i>Ctrl+C</i></div>
         <div class="cmd"><b>edu1-2</b><span>텔레옵 + 카메라 화면</span><i>Ctrl+C</i></div>
         <div class="cmd"><b>edu2-1</b><span>녹화 연습 — 에피소드 2개 (연습용)</span><i>자동 종료</i></div>
@@ -349,7 +351,7 @@ DISPLAY_DATA=false edu1-2   <b>화면 없이 (rerun 이 없을 때)</b></div>
           <tr><td>rerun</td><td>같은 명령. 급하면 <code>DISPLAY_DATA=false</code> 로 화면 없이 실행</td></tr>
           <tr><td>lerobot 명령</td><td>해당 PC 에 lerobot 미설치</td></tr>
           <tr><td>포트 · 카메라</td><td>케이블 확인 후 <code>edu-set</code> 으로 다시 설정</td></tr>
-          <tr><td>보정값</td><td><code>edu1-1</code> 실행 시 새로 보정</td></tr>
+          <tr><td>보정값 (ⓘ)</td><td>같은 팔이면 기존 파일 복사, 아니면 <code>edu0-1</code> · <code>edu0-2</code> 로 보정</td></tr>
           <tr><td>백본 캐시</td><td><code>models/</code> 없이 옮긴 경우 → 다시 복사</td></tr>
         </tbody>
       </table></div>
@@ -386,7 +388,8 @@ DISPLAY_DATA=false edu1-2   <b>화면 없이 (rerun 이 없을 때)</b></div>
         <li>기본 ID 그대로라면 <code>~/.cache/huggingface/lerobot/calibration/…</code></li>
         <li><strong>팔로워와 리더는 서로 다른 폴더</strong>에 있고, 파일 이름이
             <code>config.sh</code> 의 ID 와 <strong>같아야</strong> 읽힙니다</li>
-        <li>없어도 됩니다 — <code>edu1-1</code> 실행 시 새로 보정합니다</li>
+        <li>없으면 <code>edu0-1</code> · <code>edu0-2</code> 로 보정합니다. 건너뛰어도 <code>edu1-1</code> 실행 시 새로 보정합니다</li>
+        <li><strong>같은 팔이면 보정하지 말고 복사</strong>하세요 — 안정본은 그 보정값으로 녹화한 데이터로 학습했습니다</li>
       </ul>
 
       <h3>데이터는 함께 옮겨지지 않음</h3>

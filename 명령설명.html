@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>edu 명령 설명서 — edu1-1 → edu4-2</title>
+<title>edu 명령 설명서 — edu0-1 → edu4-2</title>
 
 <style>
   :root {
@@ -178,7 +178,7 @@
 <div class="page">
   <header class="masthead">
     <div class="eyebrow">교육용 도구 · 명령 설명서 · 2026-09-08</div>
-    <h1>edu1-1 부터 edu4-2 까지</h1>
+    <h1>edu0-1 부터 edu4-2 까지</h1>
     <p class="standfirst">
       SO-101 교육 도구의 <strong>명령 열 개</strong>를 하나씩 설명합니다. 무엇을 하는 명령인지,
       화면에 무엇이 표시되는지, 무엇을 확인하고 다음으로 넘어가는지 다룹니다. 번호가 곧 순서입니다.
@@ -196,7 +196,7 @@
   <div class="one">
     <code>bash ~/edu_base/edu-set.sh</code>
     <p>새 PC 에서는 <strong>이 한 줄</strong>을 먼저 실행하세요 — 실행 권한 · 파이썬 환경 · 단축 명령 ·
-       포트 · 카메라 · 준비 점검을 한 번에 처리합니다. 끝나면 어디서든 <code>edu1-1</code> 처럼 실행할 수 있습니다.
+       포트 · 카메라 · 준비 점검을 한 번에 처리합니다. 끝나면 어디서든 <code>edu0-1</code> 처럼 실행할 수 있습니다.
        수정할 값은 모두 <code>config.sh</code> 한 곳에 있습니다.</p>
   </div>
 
@@ -300,8 +300,10 @@
   <section class="sec">
     <div class="num">나</div>
     <div class="col">
-      <h2>열 개 한눈에</h2>
+      <h2>열두 개 한눈에</h2>
       <div class="cmds">
+        <div class="cmd"><b>edu0-1</b><span>팔로워 보정. 가운데 자세 → 관절마다 끝에서 끝까지. 보정 파일이 있으면 그대로 쓸지 먼저 물음</span><i>lerobot-calibrate --robot</i></div>
+        <div class="cmd"><b>edu0-2</b><span>리더 보정. 같은 방식. 건너뛰어도 1-1 이 보정 파일이 없으면 그 자리에서 보정</span><i>lerobot-calibrate --teleop</i></div>
         <div class="cmd"><b>edu1-1</b><span>텔레옵. 리더암을 움직이면 팔로워가 따라 움직임. 화면 없음</span><i>lerobot-teleoperate</i></div>
         <div class="cmd"><b>edu1-2</b><span>텔레옵 + 카메라 두 대. 녹화될 화면을 미리 조정</span><i>lerobot-teleoperate --robot.cameras</i></div>
         <div class="cmd"><b>edu2-1</b><span>녹화 연습 (에피소드 2개). 연습용 데이터셋이라 본 녹화본에 영향 없음</span><i>lerobot-record</i></div>
@@ -932,7 +934,7 @@
 
   <div class="colophon">
     <span>edu_base · SO-101 교육용 도구</span>
-    <span>명령 10개 · edu1-1 → edu4-2</span>
+    <span>명령 12개 · edu0-1 → edu4-2</span>
     <span>2026-09-08</span>
     <span>전부 로컬 · 인터넷 없이 동작</span>
   </div>

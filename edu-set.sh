@@ -2,7 +2,7 @@
 # edu-set · 새 PC 맞추기 — 단축 명령을 걸고, 포트·카메라를 잡고, 준비 상태를 점검한다.
 #
 #   새 PC 에서 **첫 명령**이다 :   bash edu-set.sh
-#   그 실행으로 edu-set · edu1-1 … 이 걸리고, 그다음부터는 어디서든 : edu-set
+#   그 실행으로 edu-set · edu0-1 … 이 걸리고, 그다음부터는 어디서든 : edu-set
 #
 #   ⚠ 포트가 어느 팔인지는 **사람이 정한다.** 이 도구는 케이블을 뽑았다 꽂게 해서
 #      사라진 포트를 알려줄 뿐이고, 넣기 전에 반드시 미리보기와 확인을 거친다.
@@ -74,11 +74,11 @@ if [[ "$a" =~ ^[Yy]$ ]]; then
   mkdir -p "$BIN"
   n=0
   ln -sfn "$EDU_DIR/edu-set.sh" "$BIN/edu-set" && n=$((n+1))
-  for f in "$EDU_DIR"/[1-4]-[1-9]_*.sh; do
+  for f in "$EDU_DIR"/[0-4]-[1-9]_*.sh; do
     b="$(basename "$f")"; ln -sfn "$f" "$BIN/edu${b%%_*}" && n=$((n+1))
   done
   echo "  명령 $n 개 등록 완료 :"
-  ls -1 "$BIN"/edu-set "$BIN"/edu[1-4]-* 2>/dev/null | xargs -n1 basename | tr "\n" " " | sed "s|^|    |"; echo
+  ls -1 "$BIN"/edu-set "$BIN"/edu[0-4]-* 2>/dev/null | xargs -n1 basename | tr "\n" " " | sed "s|^|    |"; echo
   case ":$PATH:" in
     *":$BIN:"*) echo "  PATH 등록됨 — 바로 사용 가능" ;;
     *) echo "  ⚠ $BIN 이 PATH 에 없음 — ~/.bashrc 에 아래 줄을 추가하세요 :"
@@ -239,16 +239,17 @@ fi
   || info "녹화본" "아직 없음 (edu2-3 으로 녹화)"
 
 echo "── 로봇 ──"
-# 보정값(텔레옵 파일)은 폴더 안이 아니라 데이터 루트 밑에 있다. 경로를 그대로 보여준다 —
-# 옛 PC 에서 복사해 오거나, 없으면 1-1 이 그 자리에서 새로 잡는다.
+# 보정값은 폴더 안이 아니라 데이터 루트 밑에 있다. 경로를 그대로 보여준다 —
+# 같은 팔이면 옛 PC 에서 복사해 오고, 아니면 0-1·0-2 로 잡는다 (건너뛰어도 1-1 이 잡는다).
+# 없는 게 결함은 아니다 — 새 PC 의 정상 순서라 ✘ 가 아니라 ⓘ 로 둔다.
 CAL="$LEROBOT_HOME/calibration"
 CAL_F="$CAL/robots/so_follower/$FOLLOWER_ID.json"
 CAL_L="$CAL/teleoperators/so_leader/$LEADER_ID.json"
 [[ -f "$CAL_F" ]] && ok "팔로워 보정값" "$CAL_F" \
-                  || ng "팔로워 보정값" "없음 → 1-1 실행 시 새로 보정. 기존 값을 가져오려면 :"
+                  || info "팔로워 보정값" "없음 → edu0-1 로 보정. 같은 팔이면 기존 값을 여기로 복사 :"
 [[ -f "$CAL_F" ]] || echo "       $CAL_F"
 [[ -f "$CAL_L" ]] && ok "리더 보정값" "$CAL_L" \
-                  || ng "리더 보정값" "없음 → 1-1 실행 시 새로 보정. 기존 값을 가져오려면 :"
+                  || info "리더 보정값" "없음 → edu0-2 로 보정. 같은 팔이면 기존 값을 여기로 복사 :"
 [[ -f "$CAL_L" ]] || echo "       $CAL_L"
 for p in "$FOLLOWER_PORT:팔로워 포트" "$LEADER_PORT:리더 포트"; do
   [[ -e "${p%%:*}" ]] && ok "${p#*:}" "${p%%:*}" \
@@ -327,7 +328,9 @@ done
 echo
 echo "══════════════════════════════════════════════════════"
 if (( NG == 0 )); then
-  echo "  준비 완료  →  edu1-1 부터 순서대로 진행하세요"
+  # 보정이 끝난 PC 면 0-x 는 건너뛴다
+  if [[ -f "$CAL_F" && -f "$CAL_L" ]]; then NEXT=edu1-1; else NEXT=edu0-1; fi
+  echo "  준비 완료  →  $NEXT 부터 순서대로 진행하세요"
 else
   echo "  미비 항목 ${NG}개 — 위 ✘ 항목을 먼저 해결하세요."
   echo "  ✘ 가 로봇·카메라 항목뿐이면 확인·판정·학습은 지금도 가능합니다."
